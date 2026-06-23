@@ -8,6 +8,11 @@
           class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded bg-transparent focus:outline-none focus:border-blue-500" />
       </div>
       <div>
+        <label class="block text-sm font-medium mb-1">Date</label>
+        <input v-model="dateStr" type="datetime-local" required
+          class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded bg-transparent focus:outline-none focus:border-blue-500" />
+      </div>
+      <div>
         <label class="block text-sm font-medium mb-1">Tags (comma separated)</label>
         <input v-model="tagsStr" placeholder="e.g. react, tutorial"
           class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded bg-transparent focus:outline-none focus:border-blue-500" />
@@ -34,10 +39,11 @@
 
 <script setup lang="ts">
 import { marked } from 'marked'
-import { savePost } from '~/composables/useDb'
+import { savePost, formatNow } from '~/composables/useDb'
 
 const router = useRouter()
 const title = ref('')
+const dateStr = ref(formatNow().slice(0, 16))
 const tagsStr = ref('')
 const content = ref('')
 const saving = ref(false)
@@ -68,12 +74,14 @@ async function handleSubmit() {
 
   try {
     const html = await marked.parse(content.value.trim())
-    const date = new Date().toISOString().split('T')[0]
+    const date = dateStr.value.replace('T', ' ') + ':00'
+    const now = formatNow()
 
     await savePost({
       slug,
       title: title.value.trim(),
       date,
+      modified: now,
       tags: tagArray,
       description: extractDescription(content.value),
       readingTime: readingTime(content.value),

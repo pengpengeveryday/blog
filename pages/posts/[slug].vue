@@ -7,6 +7,7 @@
       <header class="mb-8">
         <h1 class="text-3xl font-bold">{{ post.title }}</h1>
         <time class="block mt-2 text-sm text-zinc-500">{{ post.date }}</time>
+        <time v-if="post.modified && post.modified !== post.date" class="block text-xs text-zinc-400">Modified: {{ post.modified }}</time>
         <TagEditor :slug="post.slug" :initial-tags="post.tags" @update:tags="onTagsUpdate" />
       </header>
       <div class="prose prose-zinc dark:prose-invert max-w-none" v-html="post.content" />

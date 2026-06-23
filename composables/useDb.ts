@@ -4,11 +4,20 @@ export interface PostRecord {
   slug: string
   title: string
   date: string
+  modified: string
   tags: string[]
   description: string
   readingTime: string
   content: string
 }
+
+function formatNow(): string {
+  const d = new Date()
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+export { formatNow }
 
 let dbPromise: Promise<IDBPDatabase> | null = null
 

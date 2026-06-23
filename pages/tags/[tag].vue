@@ -5,7 +5,7 @@
     <template v-else>
       <div>
         <NuxtLink to="/tags" class="inline-block text-sm text-zinc-500 hover:text-blue-600 mb-4">&larr; All tags</NuxtLink>
-        <h1 class="text-3xl font-bold">#{{ tag }}</h1>
+        <h1 class="text-3xl font-bold">{{ tag }}</h1>
         <p class="text-zinc-500 mt-1">{{ posts.length }} posts</p>
       </div>
       <div class="space-y-6">
