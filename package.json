@@ -1,0 +1,30 @@
+{
+  "name": "nblog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "nuxt": "^3.16.0",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.20",
+    "autoprefixer": "^10.4.20",
+    "gray-matter": "^4.0.3",
+    "idb": "^8.0.3",
+    "marked": "^18.0.5",
+    "postcss": "^8.5.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
