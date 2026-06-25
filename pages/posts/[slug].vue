@@ -10,7 +10,10 @@
         <time v-if="post.modified && post.modified !== post.date" class="block text-xs text-zinc-400">Modified: {{ post.modified }}</time>
         <TagEditor :slug="post.slug" :initial-tags="post.tags" @update:tags="onTagsUpdate" />
       </header>
-      <div class="prose prose-zinc dark:prose-invert max-w-none" v-html="post.content" />
+      <div v-if="post.contentType === 'text'" class="whitespace-pre-wrap text-sm leading-7 text-zinc-700 dark:text-zinc-300">
+        {{ post.content }}
+      </div>
+      <div v-else class="prose prose-zinc dark:prose-invert max-w-none" v-html="post.content" />
     </article>
   </div>
 </template>

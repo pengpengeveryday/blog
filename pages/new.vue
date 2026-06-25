@@ -8,18 +8,48 @@
           class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded bg-transparent focus:outline-none focus:border-blue-500" />
       </div>
       <div>
-        <label class="block text-sm font-medium mb-1">Date</label>
-        <input v-model="dateStr" type="datetime-local" required
-          class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded bg-transparent focus:outline-none focus:border-blue-500" />
+        <label class="block text-sm font-medium mb-1">Tags</label>
+        <div class="rounded-2xl border border-zinc-200/80 bg-white/90 p-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/80">
+          <div class="flex flex-wrap gap-2">
+            <template v-for="tag in selectedTags" :key="tag">
+              <span class="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                {{ tag }}
+                <button type="button" @click="removeTag(tag)" class="leading-none text-zinc-400 transition-colors hover:text-red-500">×</button>
+              </span>
+            </template>
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <div class="relative flex-1">
+              <select v-model="tagInput" class="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 pr-9 text-sm text-zinc-700 shadow-sm outline-none transition focus:border-blue-500 focus:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:bg-zinc-900">
+                <option value="">Select or type a tag</option>
+                <option v-for="tag in availableTags" :key="tag" :value="tag">{{ tag }}</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-400">
+                ▼
+              </div>
+            </div>
+            <button type="button" @click="addTag" class="rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
+              Add
+            </button>
+          </div>
+        </div>
       </div>
       <div>
-        <label class="block text-sm font-medium mb-1">Tags (comma separated)</label>
-        <input v-model="tagsStr" placeholder="e.g. react, tutorial"
-          class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded bg-transparent focus:outline-none focus:border-blue-500" />
+        <label class="block text-sm font-medium mb-1">Content Format</label>
+        <div class="flex gap-2">
+          <label class="flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm transition hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+            <input v-model="contentFormat" type="radio" value="markdown" class="h-4 w-4 text-blue-600" />
+            <span>Markdown</span>
+          </label>
+          <label class="flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm transition hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+            <input v-model="contentFormat" type="radio" value="text" class="h-4 w-4 text-blue-600" />
+            <span>Plain text</span>
+          </label>
+        </div>
       </div>
       <div>
-        <label class="block text-sm font-medium mb-1">Content (Markdown)</label>
-        <textarea v-model="content" placeholder="Write your post in Markdown..." required :rows="16"
+        <label class="block text-sm font-medium mb-1">Content</label>
+        <textarea v-model="content" :placeholder="contentFormat === 'markdown' ? 'Write your post in Markdown...' : 'Write your post as plain text...'" required :rows="16"
           class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded bg-transparent focus:outline-none focus:border-blue-500 font-mono resize-y" />
       </div>
       <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
@@ -43,9 +73,11 @@ import { savePost, formatNow, getAllPostsClient } from '~/composables/useDb'
 
 const router = useRouter()
 const title = ref('')
-const dateStr = ref(formatNow().slice(0, 16))
-const tagsStr = ref('')
+const tagInput = ref('')
+const selectedTags = ref<string[]>([])
+const availableTags = ref<string[]>([])
 const content = ref('')
+const contentFormat = ref<'markdown' | 'text'>('markdown')
 const saving = ref(false)
 const error = ref('')
 
@@ -86,30 +118,51 @@ function readingTime(text: string): string {
   return `${Math.max(1, Math.ceil(words / 200))} min read`
 }
 
+function addTag() {
+  const value = tagInput.value.trim()
+  if (!value) return
+  const normalized = value.toLowerCase()
+  if (!selectedTags.value.some((tag) => tag.toLowerCase() === normalized)) {
+    selectedTags.value = [...selectedTags.value, value]
+  }
+  tagInput.value = ''
+}
+
+function removeTag(tag: string) {
+  selectedTags.value = selectedTags.value.filter((item) => item !== tag)
+}
+
+onMounted(async () => {
+  const existingPosts = await getAllPostsClient()
+  const tags = Array.from(new Set(existingPosts.flatMap((post) => post.tags || [])))
+  availableTags.value = tags.sort((a, b) => a.localeCompare(b))
+})
+
 async function handleSubmit() {
   if (!title.value.trim() || !content.value.trim()) return
 
   saving.value = true
   error.value = ''
 
-  const tagArray = tagsStr.value.split(',').map((t) => t.trim()).filter(Boolean)
-
   try {
-    const html = await marked.parse(content.value.trim())
-    const date = dateStr.value.replace('T', ' ') + ':00'
     const now = formatNow()
+    const normalizedContent = content.value.trim()
+    const html = contentFormat.value === 'markdown'
+      ? await marked.parse(normalizedContent)
+      : normalizedContent
     const existingPosts = await getAllPostsClient()
     const slug = buildUniqueSlug(title.value, existingPosts.map((post) => post.slug))
 
     await savePost({
       slug,
       title: title.value.trim(),
-      date,
+      date: now,
       modified: now,
-      tags: tagArray,
-      description: extractDescription(content.value),
-      readingTime: readingTime(content.value),
+      tags: selectedTags.value,
+      description: extractDescription(normalizedContent),
+      readingTime: readingTime(normalizedContent),
       content: html,
+      contentType: contentFormat.value,
     })
 
     router.push(`/posts/${slug}`)

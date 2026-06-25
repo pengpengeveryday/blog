@@ -12,6 +12,7 @@ export interface PostRecord {
   description: string
   readingTime: string
   content: string
+  contentType?: 'markdown' | 'text'
 }
 
 function formatNow(): string {
