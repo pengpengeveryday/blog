@@ -20,10 +20,16 @@ import { getPostBySlugClient } from '~/composables/useDb'
 import TagEditor from '~/components/TagEditor.vue'
 
 const route = useRoute()
+const router = useRouter()
 const slug = computed(() => route.params.slug as string)
 
 const post = ref<any>(null)
 const loaded = ref(false)
+
+const cleanedContent = computed(() => {
+  if (!post.value) return ''
+  return post.value.content.replace(/<h1[^>]*>.*?<\/h1>/i, '').trim()
+})
 
 onMounted(async () => {
   const p = await getPostBySlugClient(slug.value)

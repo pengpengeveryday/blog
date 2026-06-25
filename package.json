@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "build": "nuxt build",
     "generate": "nuxt generate",
-    "preview": "nuxt preview"
+    "preview": "nuxt preview",
+    "release": "npm run build && npx cap sync android && cd android && gradlew.bat assembleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
