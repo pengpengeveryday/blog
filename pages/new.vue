@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { marked } from 'marked'
-import { savePost, formatNow } from '~/composables/useDb'
+import { savePost, formatNow, getAllPostsClient } from '~/composables/useDb'
 
 const router = useRouter()
 const title = ref('')
@@ -50,7 +50,30 @@ const saving = ref(false)
 const error = ref('')
 
 function slugify(text: string): string {
-  return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'untitled'
+  const normalized = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+  const slug = normalized
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  return slug || 'untitled'
+}
+
+function buildUniqueSlug(title: string, existingSlugs: Iterable<string>): string {
+  const baseSlug = slugify(title) || 'untitled'
+  const used = new Set(existingSlugs)
+  if (!used.has(baseSlug)) return baseSlug
+
+  let counter = 2
+  let candidate = `${baseSlug}-${counter}`
+  while (used.has(candidate)) {
+    counter += 1
+    candidate = `${baseSlug}-${counter}`
+  }
+  return candidate
 }
 
 function extractDescription(text: string): string {
@@ -69,13 +92,14 @@ async function handleSubmit() {
   saving.value = true
   error.value = ''
 
-  const slug = slugify(title.value)
   const tagArray = tagsStr.value.split(',').map((t) => t.trim()).filter(Boolean)
 
   try {
     const html = await marked.parse(content.value.trim())
     const date = dateStr.value.replace('T', ' ') + ':00'
     const now = formatNow()
+    const existingPosts = await getAllPostsClient()
+    const slug = buildUniqueSlug(title.value, existingPosts.map((post) => post.slug))
 
     await savePost({
       slug,

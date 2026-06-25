@@ -55,9 +55,16 @@ const tags = ref<{ tag: string; count: number }[]>([])
 const loaded = ref(false)
 
 async function loadData() {
-  tags.value = await getAllTagsClient()
-  posts.value = tag.value ? await getPostsByTagClient(tag.value) : await getAllPostsClient()
-  loaded.value = true
+  try {
+    tags.value = await getAllTagsClient()
+    posts.value = tag.value ? await getPostsByTagClient(tag.value) : await getAllPostsClient()
+  } catch (error) {
+    console.warn('Failed to load posts', error)
+    posts.value = []
+    tags.value = []
+  } finally {
+    loaded.value = true
+  }
 }
 
 onMounted(loadData)
