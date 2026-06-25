@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { marked } from 'marked'
-import { savePost, formatNow, getAllPostsClient } from '~/composables/useDb'
+import { savePost, formatNow, getAllPostsClient, getAllTagsClient } from '~/composables/useDb'
 
 const router = useRouter()
 const title = ref('')
@@ -133,9 +133,8 @@ function removeTag(tag: string) {
 }
 
 onMounted(async () => {
-  const existingPosts = await getAllPostsClient()
-  const tags = Array.from(new Set(existingPosts.flatMap((post) => post.tags || [])))
-  availableTags.value = tags.sort((a, b) => a.localeCompare(b))
+  const tags = await getAllTagsClient()
+  availableTags.value = tags.map((item) => item.tag).sort((a, b) => a.localeCompare(b))
 })
 
 async function handleSubmit() {
